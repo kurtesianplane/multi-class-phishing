@@ -96,10 +96,19 @@ CLASS_LABELS = {
 
 def init_progress(df, annotator_id):
     df = df.copy()
-    n = len(df)
-    df['annotation_label'] = np.nan
-    df['annotator_remarks'] = ''
-    df['is_skipped'] = False
+    # Preserve existing annotations if the uploaded CSV already has them
+    if 'annotation_label' not in df.columns:
+        df['annotation_label'] = np.nan
+    else:
+        df['annotation_label'] = pd.to_numeric(df['annotation_label'], errors='coerce')
+    if 'annotator_remarks' not in df.columns:
+        df['annotator_remarks'] = ''
+    else:
+        df['annotator_remarks'] = df['annotator_remarks'].fillna('')
+    if 'is_skipped' not in df.columns:
+        df['is_skipped'] = False
+    else:
+        df['is_skipped'] = df['is_skipped'].astype(bool)
     df['annotator_id'] = annotator_id
     return df
 
@@ -177,6 +186,12 @@ elif st.session_state.annotator_id is None:
             if st.button(f"{i}", key=f"ann_{i}", use_container_width=True):
                 st.session_state.annotator_id = f"Annotator_{i}"
                 st.session_state.progress_df = init_progress(st.session_state.uploaded_df, st.session_state.annotator_id)
+                # Auto-jump to first unannotated item so annotators resume where they left off
+                pending = st.session_state.progress_df['annotation_label'].isna() & ~st.session_state.progress_df['is_skipped']
+                if pending.any():
+                    st.session_state.current_idx = int(pending.idxmax())
+                else:
+                    st.session_state.current_idx = 0
                 st.rerun()
     
     st.title("Phishing Email Annotation Tool")
