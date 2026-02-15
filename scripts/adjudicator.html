@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Annotation Adjudication Tool - Phishing Email Classification</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+        
+        .progress-bar {
+            background: rgba(255,255,255,0.2);
+            height: 8px;
+            border-radius: 4px;
+            margin-top: 20px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            background: #4ade80;
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+        
+        .progress-text {
+            margin-top: 10px;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 0;
+            min-height: 600px;
+        }
+        
+        .email-panel {
+            padding: 30px;
+            border-right: 2px solid #e5e7eb;
+            overflow-y: auto;
+            max-height: calc(100vh - 250px);
+        }
+        
+        .email-header {
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .email-meta {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .meta-item {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .meta-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: #64748b;
+            font-weight: 600;
+            margin-bottom: 5px;
+            letter-spacing: 0.5px;
+        }
+        
+        .meta-value {
+            font-size: 14px;
+            color: #1e293b;
+            font-weight: 500;
+        }
+        
+        .email-text {
+            background: white;
+            padding: 25px;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            line-height: 1.8;
+            font-size: 14px;
+            color: #334155;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .annotation-panel {
+            background: #f8fafc;
+            padding: 30px;
+            overflow-y: auto;
+            max-height: calc(100vh - 250px);
+        }
+        
+        .section-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        
+        .annotator-votes {
+            margin-bottom: 30px;
+        }
+        
+        .annotator-card {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 12px;
+            border: 2px solid #e5e7eb;
+            transition: all 0.2s;
+        }
+        
+        .annotator-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.1);
+        }
+        
+        .annotator-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .annotator-name {
+            font-weight: 600;
+            color: #1e293b;
+            font-size: 14px;
+        }
+        
+        .annotator-badge {
+            background: #667eea;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        
+        .annotator-badge.expert {
+            background: #f59e0b;
+        }
+        
+        .annotation-value {
+            font-size: 15px;
+            color: #334155;
+            padding: 8px 12px;
+            background: #f1f5f9;
+            border-radius: 6px;
+            font-weight: 500;
+        }
+        
+        .annotation-empty {
+            color: #94a3b8;
+            font-style: italic;
+        }
+        
+        .confidence-bar {
+            margin-top: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .confidence-label {
+            font-size: 11px;
+            color: #64748b;
+            min-width: 80px;
+        }
+        
+        .confidence-track {
+            flex: 1;
+            height: 6px;
+            background: #e5e7eb;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        
+        .confidence-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ef4444, #f59e0b, #10b981);
+            transition: width 0.3s;
+        }
+        
+        .weighted-result {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+        }
+        
+        .weighted-label {
+            font-size: 12px;
+            opacity: 0.9;
+            margin-bottom: 8px;
+        }
+        
+        .weighted-value {
+            font-size: 18px;
+            font-weight: 700;
+        }
+        
+        .adjudication-reason {
+            background: #fef3c7;
+            border: 2px solid #fbbf24;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+        }
+        
+        .reason-title {
+            font-size: 12px;
+            font-weight: 700;
+            color: #92400e;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+        
+        .reason-text {
+            font-size: 14px;
+            color: #78350f;
+            line-height: 1.5;
+        }
+        
+        .decision-area {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid #e5e7eb;
+        }
+        
+        .class-buttons {
+            display: grid;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .class-btn {
+            padding: 15px;
+            border: 2px solid #e5e7eb;
+            background: white;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: left;
+            font-size: 14px;
+            font-weight: 600;
+            color: #334155;
+        }
+        
+        .class-btn:hover {
+            border-color: #667eea;
+            background: #f8fafc;
+        }
+        
+        .class-btn.selected {
+            border-color: #667eea;
+            background: #667eea;
+            color: white;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+        
+        .class-btn .class-num {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            background: #e5e7eb;
+            color: #64748b;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 24px;
+            font-size: 12px;
+            margin-right: 10px;
+            font-weight: 700;
+        }
+        
+        .class-btn.selected .class-num {
+            background: white;
+            color: #667eea;
+        }
+        
+        .skip-btn {
+            width: 100%;
+            padding: 12px;
+            background: #f1f5f9;
+            border: 2px solid #cbd5e1;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            color: #64748b;
+            margin-bottom: 15px;
+            transition: all 0.2s;
+        }
+        
+        .skip-btn:hover {
+            background: #e2e8f0;
+            border-color: #94a3b8;
+        }
+        
+        .action-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        
+        .btn {
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 700;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .btn-secondary {
+            background: #f1f5f9;
+            color: #64748b;
+        }
+        
+        .btn-secondary:hover {
+            background: #e2e8f0;
+        }
+        
+        .stats-bar {
+            background: #1e293b;
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .stat-item {
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 11px;
+            opacity: 0.7;
+            text-transform: uppercase;
+        }
+        
+        .completion-screen {
+            display: none;
+            padding: 60px 30px;
+            text-align: center;
+        }
+        
+        .completion-screen.active {
+            display: block;
+        }
+        
+        .completion-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+        }
+        
+        .completion-title {
+            font-size: 32px;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 15px;
+        }
+        
+        .completion-text {
+            font-size: 16px;
+            color: #64748b;
+            margin-bottom: 30px;
+        }
+        
+        .download-btn {
+            display: inline-block;
+            padding: 15px 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 700;
+            transition: all 0.2s;
+        }
+        
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .file-upload {
+            background: white;
+            padding: 40px;
+            text-align: center;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        
+        .upload-area {
+            border: 3px dashed #cbd5e1;
+            border-radius: 15px;
+            padding: 40px;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #f8fafc;
+        }
+        
+        .upload-area:hover {
+            border-color: #667eea;
+            background: #f1f5f9;
+        }
+        
+        .upload-area.dragover {
+            border-color: #667eea;
+            background: #ede9fe;
+        }
+        
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+            color: #64748b;
+        }
+        
+        .upload-text {
+            font-size: 16px;
+            color: #334155;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .upload-hint {
+            font-size: 13px;
+            color: #64748b;
+        }
+        
+        #fileInput {
+            display: none;
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+        
+        .notes-area {
+            margin-top: 15px;
+        }
+        
+        .notes-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #64748b;
+            margin-bottom: 8px;
+            display: block;
+        }
+        
+        .notes-input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 13px;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 60px;
+        }
+        
+        .notes-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Upload Section -->
+        <div id="uploadSection" class="file-upload">
+            <h2 style="margin-bottom: 30px; color: #1e293b;">Load Adjudication Data</h2>
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">📁</div>
+                <div class="upload-text">Drop adjudication_needed.csv here</div>
+                <div class="upload-hint">or click to browse</div>
+            </div>
+            <input type="file" id="fileInput" accept=".csv">
+        </div>
+
+        <!-- Header -->
+        <div class="header hidden" id="mainHeader">
+            <h1>📧 Annotation Adjudication Tool</h1>
+            <p>Review and resolve annotation disagreements for phishing email classification</p>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-text" id="progressText">0 of 0 completed</div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content hidden" id="mainContent">
+            <div class="email-panel">
+                <div class="email-header">
+                    <div class="email-meta">
+                        <div class="meta-item">
+                            <span class="meta-label">Email ID</span>
+                            <span class="meta-value" id="emailId">-</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">Source Dataset</span>
+                            <span class="meta-value" id="sourceDataset">-</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">Word Count</span>
+                            <span class="meta-value" id="wordCount">-</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">Sender</span>
+                            <span class="meta-value" id="sender">-</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <h3 style="font-size: 16px; margin-bottom: 15px; color: #1e293b;">Email Content:</h3>
+                <div class="email-text" id="emailText">
+                    Loading email content...
+                </div>
+            </div>
+
+            <div class="annotation-panel">
+                <div class="adjudication-reason">
+                    <div class="reason-title">⚠️ Needs Adjudication</div>
+                    <div class="reason-text" id="adjudicationReason">-</div>
+                </div>
+
+                <div class="weighted-result">
+                    <div class="weighted-label">Weighted Voting Result:</div>
+                    <div class="weighted-value" id="weightedResult">-</div>
+                </div>
+
+                <div class="annotator-votes">
+                    <div class="section-title">Annotator Votes</div>
+                    <div id="annotatorVotes"></div>
+                </div>
+
+                <div class="decision-area">
+                    <div class="section-title">Your Decision</div>
+                    
+                    <div class="class-buttons">
+                        <button class="class-btn" data-class="1">
+                            <span class="class-num">1</span>
+                            Commercial / R18 Phishing
+                        </button>
+                        <button class="class-btn" data-class="2">
+                            <span class="class-num">2</span>
+                            Monetary Phishing
+                        </button>
+                        <button class="class-btn" data-class="3">
+                            <span class="class-num">3</span>
+                            Credential Phishing
+                        </button>
+                        <button class="class-btn" data-class="4">
+                            <span class="class-num">4</span>
+                            Generic Phishing
+                        </button>
+                    </div>
+
+                    <button class="skip-btn" id="skipBtn">⏭️ Skip (Mark for Later Review)</button>
+
+                    <div class="notes-area">
+                        <label class="notes-label">Notes (Optional):</label>
+                        <textarea class="notes-input" id="notesInput" placeholder="Add any notes about your decision..."></textarea>
+                    </div>
+
+                    <div class="action-buttons">
+                        <button class="btn btn-secondary" id="prevBtn">← Previous</button>
+                        <button class="btn btn-primary" id="nextBtn" disabled>Save & Next →</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Completion Screen -->
+        <div class="completion-screen" id="completionScreen">
+            <div class="completion-icon">🎉</div>
+            <div class="completion-title">Adjudication Complete!</div>
+            <div class="completion-text">
+                You've reviewed all emails that needed adjudication.<br>
+                Download your decisions to merge with the consensus data.
+            </div>
+            <button class="download-btn" id="downloadBtn">📥 Download Adjudicated Labels</button>
+        </div>
+
+        <!-- Stats Bar -->
+        <div class="stats-bar hidden" id="statsBar">
+            <div class="stat-item">
+                <div class="stat-value" id="statTotal">0</div>
+                <div class="stat-label">Total</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="statCompleted">0</div>
+                <div class="stat-label">Completed</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="statSkipped">0</div>
+                <div class="stat-label">Skipped</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="statRemaining">0</div>
+                <div class="stat-label">Remaining</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global state
+        let adjudicationData = [];
+        let currentIndex = 0;
+        let decisions = [];
+        
+        const CLASS_LABELS = {
+            1: 'Commercial/R18 Phishing',
+            2: 'Monetary Phishing',
+            3: 'Credential Phishing',
+            4: 'Generic Phishing'
+        };
+        
+        const TIER_LABELS = {
+            'expert': 'Expert',
+            'student': 'Student'
+        };
+
+        // File upload handling
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        
+        uploadArea.addEventListener('click', () => fileInput.click());
+        
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file) handleFile(file);
+        });
+        
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) handleFile(file);
+        });
+
+        function handleFile(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    parseCSV(e.target.result);
+                    document.getElementById('uploadSection').classList.add('hidden');
+                    document.getElementById('mainHeader').classList.remove('hidden');
+                    document.getElementById('mainContent').classList.remove('hidden');
+                    document.getElementById('statsBar').classList.remove('hidden');
+                    initializeAdjudication();
+                } catch (error) {
+                    alert('Error parsing CSV: ' + error.message);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function parseCSV(text) {
+            const lines = text.trim().split('\n');
+            const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+            
+            adjudicationData = lines.slice(1).map(line => {
+                const values = parseCSVLine(line);
+                const row = {};
+                headers.forEach((header, i) => {
+                    row[header] = values[i] || '';
+                });
+                return row;
+            });
+            
+            decisions = adjudicationData.map(() => ({
+                final_label: null,
+                notes: '',
+                skipped: false
+            }));
+        }
+
+        function parseCSVLine(line) {
+            const result = [];
+            let current = '';
+            let inQuotes = false;
+            
+            for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+                
+                if (char === '"') {
+                    inQuotes = !inQuotes;
+                } else if (char === ',' && !inQuotes) {
+                    result.push(current.trim().replace(/^"|"$/g, ''));
+                    current = '';
+                } else {
+                    current += char;
+                }
+            }
+            result.push(current.trim().replace(/^"|"$/g, ''));
+            return result;
+        }
+
+        function initializeAdjudication() {
+            updateStats();
+            loadEmail(0);
+        }
+
+        function loadEmail(index) {
+            if (index < 0 || index >= adjudicationData.length) return;
+            
+            currentIndex = index;
+            const email = adjudicationData[index];
+            const decision = decisions[index];
+            
+            // Update email details
+            document.getElementById('emailId').textContent = email.email_id || '-';
+            document.getElementById('sourceDataset').textContent = email.source_dataset || '-';
+            document.getElementById('wordCount').textContent = email.word_count || '-';
+            document.getElementById('sender').textContent = email.sender || '-';
+            document.getElementById('emailText').textContent = email.text_cleaned || 'No text available';
+            
+            // Update adjudication reason
+            document.getElementById('adjudicationReason').textContent = email.adjudication_reason || 'No reason specified';
+            
+            // Update weighted result
+            const weightedLabel = email.weighted_vote_label;
+            document.getElementById('weightedResult').textContent = 
+                weightedLabel ? `Class ${weightedLabel}: ${CLASS_LABELS[weightedLabel]}` : 'No consensus';
+            
+            // Load annotator votes
+            loadAnnotatorVotes(email);
+            
+            // Restore previous decision if any
+            document.querySelectorAll('.class-btn').forEach(btn => {
+                btn.classList.remove('selected');
+                if (decision.final_label && btn.dataset.class == decision.final_label) {
+                    btn.classList.add('selected');
+                }
+            });
+            
+            document.getElementById('notesInput').value = decision.notes || '';
+            document.getElementById('nextBtn').disabled = !decision.final_label;
+            
+            // Update navigation buttons
+            document.getElementById('prevBtn').disabled = index === 0;
+            
+            updateProgress();
+        }
+
+        function loadAnnotatorVotes(email) {
+            const container = document.getElementById('annotatorVotes');
+            container.innerHTML = '';
+            
+            // Parse annotator data
+            const annotators = [];
+            for (let i = 1; i <= 4; i++) {
+                const label = email[`annotator_${i}_label`];
+                const confidence = email[`annotator_${i}_confidence`];
+                const tier = email[`annotator_${i}_tier`];
+                
+                annotators.push({
+                    id: i,
+                    label: label,
+                    confidence: confidence,
+                    tier: tier
+                });
+            }
+            
+            annotators.forEach(annotator => {
+                const card = document.createElement('div');
+                card.className = 'annotator-card';
+                
+                const hasVote = annotator.label && annotator.label !== '' && annotator.label !== 'NaN';
+                
+                card.innerHTML = `
+                    <div class="annotator-header">
+                        <span class="annotator-name">Annotator ${annotator.id}</span>
+                        <span class="annotator-badge ${annotator.tier === 'expert' ? 'expert' : ''}">${TIER_LABELS[annotator.tier] || 'Unknown'}</span>
+                    </div>
+                    <div class="annotation-value ${!hasVote ? 'annotation-empty' : ''}">
+                        ${hasVote ? `Class ${annotator.label}: ${CLASS_LABELS[annotator.label]}` : 'No annotation'}
+                    </div>
+                    ${hasVote && annotator.confidence ? `
+                        <div class="confidence-bar">
+                            <span class="confidence-label">Confidence:</span>
+                            <div class="confidence-track">
+                                <div class="confidence-fill" style="width: ${annotator.confidence}%"></div>
+                            </div>
+                            <span class="confidence-label">${annotator.confidence}%</span>
+                        </div>
+                    ` : ''}
+                `;
+                
+                container.appendChild(card);
+            });
+        }
+
+        function updateStats() {
+            const total = adjudicationData.length;
+            const completed = decisions.filter(d => d.final_label && !d.skipped).length;
+            const skipped = decisions.filter(d => d.skipped).length;
+            const remaining = total - completed - skipped;
+            
+            document.getElementById('statTotal').textContent = total;
+            document.getElementById('statCompleted').textContent = completed;
+            document.getElementById('statSkipped').textContent = skipped;
+            document.getElementById('statRemaining').textContent = remaining;
+        }
+
+        function updateProgress() {
+            const total = adjudicationData.length;
+            const completed = decisions.filter(d => d.final_label || d.skipped).length;
+            const percentage = (completed / total) * 100;
+            
+            document.getElementById('progressFill').style.width = percentage + '%';
+            document.getElementById('progressText').textContent = `${completed} of ${total} completed (${Math.round(percentage)}%)`;
+            
+            // Check if all completed
+            if (completed === total) {
+                showCompletionScreen();
+            }
+        }
+
+        function showCompletionScreen() {
+            document.getElementById('mainHeader').classList.add('hidden');
+            document.getElementById('mainContent').classList.add('hidden');
+            document.getElementById('completionScreen').classList.add('active');
+        }
+
+        // Class button selection
+        document.querySelectorAll('.class-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.class-btn').forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+                decisions[currentIndex].final_label = parseInt(btn.dataset.class);
+                decisions[currentIndex].skipped = false;
+                document.getElementById('nextBtn').disabled = false;
+            });
+        });
+
+        // Skip button
+        document.getElementById('skipBtn').addEventListener('click', () => {
+            decisions[currentIndex].skipped = true;
+            decisions[currentIndex].final_label = null;
+            saveNotes();
+            
+            if (currentIndex < adjudicationData.length - 1) {
+                loadEmail(currentIndex + 1);
+            } else {
+                updateStats();
+                updateProgress();
+            }
+        });
+
+        // Navigation buttons
+        document.getElementById('prevBtn').addEventListener('click', () => {
+            saveNotes();
+            loadEmail(currentIndex - 1);
+        });
+
+        document.getElementById('nextBtn').addEventListener('click', () => {
+            saveNotes();
+            if (currentIndex < adjudicationData.length - 1) {
+                loadEmail(currentIndex + 1);
+            } else {
+                updateStats();
+                updateProgress();
+            }
+        });
+
+        function saveNotes() {
+            decisions[currentIndex].notes = document.getElementById('notesInput').value;
+        }
+
+        // Download button
+        document.getElementById('downloadBtn').addEventListener('click', () => {
+            const csvContent = generateCSV();
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'adjudicated_labels.csv';
+            a.click();
+            URL.revokeObjectURL(url);
+        });
+
+        function generateCSV() {
+            const headers = ['email_id', 'final_label', 'adjudicator_notes', 'was_skipped'];
+            const rows = adjudicationData.map((email, i) => {
+                const decision = decisions[i];
+                return [
+                    email.email_id || i,
+                    decision.final_label || '',
+                    decision.notes.replace(/"/g, '""'),
+                    decision.skipped ? 'TRUE' : 'FALSE'
+                ].map(val => `"${val}"`).join(',');
+            });
+            
+            return headers.join(',') + '\n' + rows.join('\n');
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.target.tagName === 'TEXTAREA') return;
+            
+            if (e.key >= '1' && e.key <= '4') {
+                const btn = document.querySelector(`.class-btn[data-class="${e.key}"]`);
+                if (btn) btn.click();
+            } else if (e.key === 'Enter' && !document.getElementById('nextBtn').disabled) {
+                document.getElementById('nextBtn').click();
+            } else if (e.key === 'ArrowLeft') {
+                document.getElementById('prevBtn').click();
+            } else if (e.key === 'ArrowRight' && !document.getElementById('nextBtn').disabled) {
+                document.getElementById('nextBtn').click();
+            } else if (e.key === 's' || e.key === 'S') {
+                document.getElementById('skipBtn').click();
+            }
+        });
+    </script>
+</body>
+</html>
